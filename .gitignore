@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Flet build outputs
+build/
+
+# Large asset files (download locally via quickstart.md)
+src/assets/countries.geojson
+
+# Environment / secrets
+.env
+.env.*
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# IDE
+.vscode/
+.idea/

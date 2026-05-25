@@ -1,0 +1,64 @@
+{
+  "tournament": "FIFA World Cup 2026",
+  "teams": [
+    {"iso_a3": "USA", "name": "United States", "group": "A", "appearances": 11, "flag_emoji": "🇺🇸"},
+    {"iso_a3": "CAN", "name": "Canada", "group": "A", "appearances": 3, "flag_emoji": "🇨🇦"},
+    {"iso_a3": "MEX", "name": "Mexico", "group": "A", "appearances": 17, "flag_emoji": "🇲🇽"},
+    {"iso_a3": "URY", "name": "Uruguay", "group": "A", "appearances": 14, "flag_emoji": "🇺🇾"},
+
+    {"iso_a3": "FRA", "name": "France", "group": "B", "appearances": 16, "flag_emoji": "🇫🇷"},
+    {"iso_a3": "MAR", "name": "Morocco", "group": "B", "appearances": 7, "flag_emoji": "🇲🇦"},
+    {"iso_a3": "JPN", "name": "Japan", "group": "B", "appearances": 8, "flag_emoji": "🇯🇵"},
+    {"iso_a3": "ECU", "name": "Ecuador", "group": "B", "appearances": 4, "flag_emoji": "🇪🇨"},
+
+    {"iso_a3": "ESP", "name": "Spain", "group": "C", "appearances": 16, "flag_emoji": "🇪🇸"},
+    {"iso_a3": "BRA", "name": "Brazil", "group": "C", "appearances": 22, "flag_emoji": "🇧🇷"},
+    {"iso_a3": "KOR", "name": "South Korea", "group": "C", "appearances": 11, "flag_emoji": "🇰🇷"},
+    {"iso_a3": "SEN", "name": "Senegal", "group": "C", "appearances": 4, "flag_emoji": "🇸🇳"},
+
+    {"iso_a3": "GBR", "name": "England", "group": "D", "appearances": 17, "flag_emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+    {"iso_a3": "ARG", "name": "Argentina", "group": "D", "appearances": 18, "flag_emoji": "🇦🇷"},
+    {"iso_a3": "IRN", "name": "Iran", "group": "D", "appearances": 6, "flag_emoji": "🇮🇷"},
+    {"iso_a3": "NGA", "name": "Nigeria", "group": "D", "appearances": 7, "flag_emoji": "🇳🇬"},
+
+    {"iso_a3": "GER", "name": "Germany", "group": "E", "appearances": 20, "flag_emoji": "🇩🇪"},
+    {"iso_a3": "COL", "name": "Colombia", "group": "E", "appearances": 7, "flag_emoji": "🇨🇴"},
+    {"iso_a3": "AUS", "name": "Australia", "group": "E", "appearances": 6, "flag_emoji": "🇦🇺"},
+    {"iso_a3": "EGY", "name": "Egypt", "group": "E", "appearances": 3, "flag_emoji": "🇪🇬"},
+
+    {"iso_a3": "NLD", "name": "Netherlands", "group": "F", "appearances": 11, "flag_emoji": "🇳🇱"},
+    {"iso_a3": "PRT", "name": "Portugal", "group": "F", "appearances": 9, "flag_emoji": "🇵🇹"},
+    {"iso_a3": "SAU", "name": "Saudi Arabia", "group": "F", "appearances": 7, "flag_emoji": "🇸🇦"},
+    {"iso_a3": "CIV", "name": "Ivory Coast", "group": "F", "appearances": 4, "flag_emoji": "🇨🇮"},
+
+    {"iso_a3": "ITA", "name": "Italy", "group": "G", "appearances": 18, "flag_emoji": "🇮🇹"},
+    {"iso_a3": "VEN", "name": "Venezuela", "group": "G", "appearances": 1, "flag_emoji": "🇻🇪"},
+    {"iso_a3": "IRQ", "name": "Iraq", "group": "G", "appearances": 2, "flag_emoji": "🇮🇶"},
+    {"iso_a3": "TUN", "name": "Tunisia", "group": "G", "appearances": 6, "flag_emoji": "🇹🇳"},
+
+    {"iso_a3": "BEL", "name": "Belgium", "group": "H", "appearances": 14, "flag_emoji": "🇧🇪"},
+    {"iso_a3": "DNK", "name": "Denmark", "group": "H", "appearances": 6, "flag_emoji": "🇩🇰"},
+    {"iso_a3": "CMR", "name": "Cameroon", "group": "H", "appearances": 9, "flag_emoji": "🇨🇲"},
+    {"iso_a3": "PAN", "name": "Panama", "group": "H", "appearances": 2, "flag_emoji": "🇵🇦"},
+
+    {"iso_a3": "HRV", "name": "Croatia", "group": "I", "appearances": 7, "flag_emoji": "🇭🇷"},
+    {"iso_a3": "SRB", "name": "Serbia", "group": "I", "appearances": 3, "flag_emoji": "🇷🇸"},
+    {"iso_a3": "ALG", "name": "Algeria", "group": "I", "appearances": 4, "flag_emoji": "🇩🇿"},
+    {"iso_a3": "HND", "name": "Honduras", "group": "I", "appearances": 3, "flag_emoji": "🇭🇳"},
+
+    {"iso_a3": "CHE", "name": "Switzerland", "group": "J", "appearances": 12, "flag_emoji": "🇨🇭"},
+    {"iso_a3": "AUT", "name": "Austria", "group": "J", "appearances": 7, "flag_emoji": "🇦🇹"},
+    {"iso_a3": "GHA", "name": "Ghana", "group": "J", "appearances": 4, "flag_emoji": "🇬🇭"},
+    {"iso_a3": "PRY", "name": "Paraguay", "group": "J", "appearances": 9, "flag_emoji": "🇵🇾"},
+
+    {"iso_a3": "POL", "name": "Poland", "group": "K", "appearances": 9, "flag_emoji": "🇵🇱"},
+    {"iso_a3": "TUR", "name": "Turkey", "group": "K", "appearances": 2, "flag_emoji": "🇹🇷"},
+    {"iso_a3": "NZL", "name": "New Zealand", "group": "K", "appearances": 3, "flag_emoji": "🇳🇿"},
+    {"iso_a3": "CRI", "name": "Costa Rica", "group": "K", "appearances": 6, "flag_emoji": "🇨🇷"},
+
+    {"iso_a3": "UKR", "name": "Ukraine", "group": "L", "appearances": 1, "flag_emoji": "🇺🇦"},
+    {"iso_a3": "GRC", "name": "Greece", "group": "L", "appearances": 3, "flag_emoji": "🇬🇷"},
+    {"iso_a3": "JOR", "name": "Jordan", "group": "L", "appearances": 1, "flag_emoji": "🇯🇴"},
+    {"iso_a3": "PER", "name": "Peru", "group": "L", "appearances": 5, "flag_emoji": "🇵🇪"}
+  ]
+}
