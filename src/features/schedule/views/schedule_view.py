@@ -107,7 +107,7 @@ def build_schedule_view(
             ft.Text("Group-stage kick-off times are shown in UTC",
                     size=13, color=TEXT_SECONDARY),
             ft.Divider(color=BORDER_COLOR, height=1),
-            lr.row,
+            lr.row, #ft.Row([group_dd, lr], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
             lr.notice,
             ft.Container(
                 rows_col,

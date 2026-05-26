@@ -2,6 +2,12 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env from the project root (two levels above this file: src/core/config.py)
+load_dotenv(Path(__file__).parents[2] / ".env")
 
 # ── football-data.org API ─────────────────────────────────────────────────────
 FOOTBALL_DATA_API_KEY: str | None = os.environ.get("FOOTBALL_DATA_API_KEY")
