@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`specs/001-worldcup-map/plan.md`
+`specs/011-team-progression/plan.md`
 <!-- SPECKIT END -->

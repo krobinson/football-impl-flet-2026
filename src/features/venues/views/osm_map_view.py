@@ -1,7 +1,10 @@
 """OpenStreetMap tile-based venue map for FIFA World Cup 2026.
 
-Uses flet-map (flutter_map) to render an interactive OSM map with
-markers for the 16 host stadiums across the USA, Canada, and Mexico.
+Displays three regional panels:
+  West  — Vancouver, Seattle, San Francisco Bay Area, Los Angeles
+  East  — Toronto, Boston, New York/NJ, Philadelphia, Atlanta, Miami,
+           Kansas City, Dallas
+  Mexico — Guadalajara, Mexico City, Monterrey, Puebla
 """
 from __future__ import annotations
 
@@ -10,33 +13,47 @@ import flet_map as ftm
 from core.venue_data import VENUES as _VENUES
 from features.venues.components import venue_marker
 
-# ── 2026 Host stadiums ────────────────────────────────────────────────────────
-# Venue data is defined in shared/venue_data.py and imported above.
+_FLAG: dict[str, str] = {
+    "USA": "🇺🇸",
+    "CAN": "🇨🇦",
+    "MEX": "🇲🇽",
+}
+
+# ── Region definitions ────────────────────────────────────────────────────────
+# Each tuple: (label, filter_fn, center_lat, center_lon, initial_zoom)
+_REGIONS = [
+    (
+        "🌊 West Coast",
+        lambda v: v["country"] in ("USA", "CAN") and v["lon"] <= -110.0,
+        43.0, -121.5, 5.0,
+    ),
+    (
+        "🗽 East & Central",
+        lambda v: v["country"] in ("USA", "CAN") and v["lon"] > -110.0,
+        36.5, -84.0, 4.5,
+    ),
+    (
+        "🌮 Mexico",
+        lambda v: v["country"] == "MEX",
+        20.3, -100.8, 6.0,
+    ),
+]
 
 
-def build_osm_map_view(page: ft.Page) -> ft.Control:
-    """Build an OSM tile map tab showing all 16 World Cup 2026 host venues."""
-
-    info_text = ft.Text(
-        "Tap a marker to see venue details",
-        size=13,
-        color=ft.Colors.GREY_400,
-        italic=True,
-    )
-
-    def _on_marker_tap(venue: dict) -> None:
-        flag = _FLAG.get(venue["country"], "🏟️")
-        info_text.value = (
-            f"{flag}  {venue['name']}  ·  {venue['city']}"
-        )
-        page.update()
-
-    markers = [venue_marker(v, _on_marker_tap) for v in _VENUES]
-
-    osm_map = ftm.Map(
+def _make_map(
+    venues: list[dict],
+    center_lat: float,
+    center_lon: float,
+    zoom: float,
+    on_tap,
+) -> ftm.Map:
+    markers = [venue_marker(v, on_tap) for v in venues]
+    return ftm.Map(
         expand=True,
-        initial_center=ftm.MapLatitudeLongitude(35.0, -95.0),
-        initial_zoom=3.5,
+        initial_center=ftm.MapLatitudeLongitude(center_lat, center_lon),
+        initial_zoom=zoom,
+        min_zoom=2.5,
+        max_zoom=12.0,
         interaction_configuration=ftm.InteractionConfiguration(
             flags=ftm.InteractionFlag.ALL,
         ),
@@ -49,41 +66,79 @@ def build_osm_map_view(page: ft.Page) -> ft.Control:
             ftm.MarkerLayer(markers=markers),
             ftm.SimpleAttribution(
                 text="© OpenStreetMap contributors",
-                on_click=lambda e: page.launch_url(
-                    "https://www.openstreetmap.org/copyright"
-                ),
+                on_click=lambda e: None,
             ),
         ],
     )
 
+
+def build_osm_map_view(page: ft.Page) -> ft.Control:
+    """Build a three-panel regional venue map for FIFA World Cup 2026."""
+
+    info_text = ft.Text(
+        "Tap a marker to see venue details",
+        size=13,
+        color=ft.Colors.GREY_400,
+        italic=True,
+    )
+
+    def _on_marker_tap(venue: dict) -> None:
+        flag = _FLAG.get(venue["country"], "🏟️")
+        info_text.value = f"{flag}  {venue['name']}  ·  {venue['city']}"
+        info_text.update()
+
+    # Build one panel per region
+    region_panels: list[ft.Control] = []
+    for label, filter_fn, clat, clon, zoom in _REGIONS:
+        region_venues = [v for v in _VENUES if filter_fn(v)]
+        region_map = _make_map(region_venues, clat, clon, zoom, _on_marker_tap)
+        panel = ft.Column(
+            [
+                ft.Text(label, size=14, weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.WHITE),
+                ft.Container(
+                    content=region_map,
+                    expand=True,
+                    border_radius=8,
+                    clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+                ),
+            ],
+            spacing=4,
+            expand=True,
+        )
+        region_panels.append(panel)
+
+    legend = ft.Row(
+        [
+            ft.Row([ft.Icon(ft.Icons.STADIUM, color=ft.Colors.BLUE_700, size=16),
+                    ft.Text("USA", color=ft.Colors.GREY_300, size=12)], spacing=4),
+            ft.Row([ft.Icon(ft.Icons.STADIUM, color=ft.Colors.RED_700, size=16),
+                    ft.Text("Canada", color=ft.Colors.GREY_300, size=12)], spacing=4),
+            ft.Row([ft.Icon(ft.Icons.STADIUM, color=ft.Colors.GREEN_700, size=16),
+                    ft.Text("Mexico", color=ft.Colors.GREY_300, size=12)], spacing=4),
+            ft.Container(expand=True),
+            info_text,
+        ],
+        spacing=16,
+    )
+
     return ft.Column(
-        controls=[
+        [
             ft.Text(
                 "FIFA World Cup 2026 — Host Venues",
                 size=22,
                 weight=ft.FontWeight.BOLD,
                 color=ft.Colors.WHITE,
             ),
+            legend,
             ft.Row(
-                controls=[
-                    ft.Row([ft.Icon(ft.Icons.STADIUM, color=ft.Colors.BLUE_700, size=16),
-                            ft.Text("USA", color=ft.Colors.GREY_300, size=12)], spacing=4),
-                    ft.Row([ft.Icon(ft.Icons.STADIUM, color=ft.Colors.RED_700, size=16),
-                            ft.Text("Canada", color=ft.Colors.GREY_300, size=12)], spacing=4),
-                    ft.Row([ft.Icon(ft.Icons.STADIUM, color=ft.Colors.GREEN_700, size=16),
-                            ft.Text("Mexico", color=ft.Colors.GREY_300, size=12)], spacing=4),
-                    ft.Container(expand=True),
-                    info_text,
-                ],
-                spacing=16,
-            ),
-            ft.Container(
-                content=osm_map,
+                region_panels,
+                spacing=8,
                 expand=True,
-                border_radius=8,
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+                vertical_alignment=ft.CrossAxisAlignment.STRETCH,
             ),
         ],
         spacing=8,
         expand=True,
     )
+

@@ -122,7 +122,8 @@ def MapView(
     osm_map = ftm.Map(
         expand=True,
         initial_center=ftm.MapLatitudeLongitude(20.0, 10.0),
-        initial_zoom=2.0,
+        min_zoom=1.2,
+        initial_zoom=2.5,
         interaction_configuration=ftm.InteractionConfiguration(
             flags=ftm.InteractionFlag.ALL,
         ),
