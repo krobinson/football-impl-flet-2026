@@ -32,3 +32,10 @@ FOOTBALL_DATA_CACHE_TTL_S: int = int(
 
 # Competition code for FIFA World Cup on football-data.org.
 FOOTBALL_DATA_WC_CODE: str = os.environ.get("FOOTBALL_DATA_WC_CODE", "WC")
+
+# ── openfootball worldcup.json URL ────────────────────────────────────────────
+# Public URL for 2026 World Cup match data (no API key required).
+WORLDCUP_JSON_URL: str = os.environ.get(
+    "WORLDCUP_JSON_URL",
+    "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json",
+)

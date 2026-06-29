@@ -1,19 +1,15 @@
-"""Entry point for the FIFA World Cup 2026 app – 7-tab layout."""
+"""Entry point for the FIFA World Cup 2026 app – 3-tab layout."""
 from __future__ import annotations
 
 import flet as ft
 
 from features.map.services import WorldCupDataService
-from features.matches.services import get_data_store
 from core.network import FootballDataClient
 from features.map.components import GroupFilter, InfoPanel, MapView
 from features.map.models import MapRenderState
-from features.tournament.views.tournament_view import build_tournament_view
-from features.teams.views.teams_view import build_teams_view
-from features.matches.views.matches_view import build_matches_view
-from features.records.views.records_view import build_records_view
 from features.venues.views.osm_map_view import build_osm_map_view
 from features.schedule.views.schedule_view import build_schedule_view
+from features.schedule.services.worldcup_json_service import WorldCupJsonService
 
 _BG = "#1A1A2E"
 
@@ -21,8 +17,8 @@ _BG = "#1A1A2E"
 def _build_app(
     page: ft.Page,
     svc: WorldCupDataService,
-    store,
     fd_client: "FootballDataClient | None",
+    wc_service: "WorldCupJsonService | None",
 ) -> ft.Control:
     """Root component body — called inside page.render() for a Renderer context."""
 
@@ -89,23 +85,6 @@ def _build_app(
 
     page.on_resized = _on_resized
 
-    # ── History tabs ──────────────────────────────────────────────────────
-    tournament_content = ft.Container(
-        build_tournament_view(store),
-        padding=16, bgcolor=_BG, expand=True,
-    )
-    teams_content = ft.Container(
-        build_teams_view(store),
-        padding=16, bgcolor=_BG, expand=True,
-    )
-    matches_content = ft.Container(
-        build_matches_view(store, football_data_client=fd_client),
-        padding=16, bgcolor=_BG, expand=True,
-    )
-    records_content = ft.Container(
-        build_records_view(store),
-        padding=16, bgcolor=_BG, expand=True,
-    )
     osm_content = ft.Container(
         build_osm_map_view(page),
         padding=ft.Padding.only(left=16, right=16, top=12, bottom=0),
@@ -113,17 +92,13 @@ def _build_app(
         expand=True,
     )
     schedule_content = ft.Container(
-        build_schedule_view(fd_client),
+        build_schedule_view(fd_client, wc_service),
         padding=16, bgcolor=_BG, expand=True,
     )
 
     # ── Navigation ────────────────────────────────────────────────────────
     tab_bodies = [
         map_tab_content,
-        tournament_content,
-        teams_content,
-        matches_content,
-        records_content,
         osm_content,
         schedule_content,
     ]
@@ -145,14 +120,6 @@ def _build_app(
         destinations=[
             ft.NavigationBarDestination(icon=ft.Icons.MAP_OUTLINED,
                                         selected_icon=ft.Icons.MAP, label="2026 Map"),
-            ft.NavigationBarDestination(icon=ft.Icons.EMOJI_EVENTS_OUTLINED,
-                                        selected_icon=ft.Icons.EMOJI_EVENTS, label="History"),
-            ft.NavigationBarDestination(icon=ft.Icons.GROUPS_OUTLINED,
-                                        selected_icon=ft.Icons.GROUPS, label="Teams"),
-            ft.NavigationBarDestination(icon=ft.Icons.SEARCH_OUTLINED,
-                                        selected_icon=ft.Icons.SEARCH, label="Matches"),
-            ft.NavigationBarDestination(icon=ft.Icons.LEADERBOARD_OUTLINED,
-                                        selected_icon=ft.Icons.LEADERBOARD, label="Records"),
             ft.NavigationBarDestination(icon=ft.Icons.PUBLIC_OUTLINED,
                                         selected_icon=ft.Icons.PUBLIC, label="Venues"),
             ft.NavigationBarDestination(icon=ft.Icons.CALENDAR_MONTH_OUTLINED,
@@ -190,8 +157,6 @@ def main(page: ft.Page) -> None:
         page.add(ft.Text(f"Map data error: {exc}", color=ft.Colors.RED_400, size=16))
         return
 
-    store = get_data_store()
-
     # football-data.org client (None when FOOTBALL_DATA_API_KEY is not set)
     fd_client: FootballDataClient | None
     try:
@@ -199,4 +164,11 @@ def main(page: ft.Page) -> None:
     except Exception:
         fd_client = None
 
-    page.render(_build_app, page, svc, store, fd_client)
+    # openfootball worldcup.json service (no API key required)
+    wc_service: WorldCupJsonService | None
+    try:
+        wc_service = WorldCupJsonService()
+    except Exception:
+        wc_service = None
+
+    page.render(_build_app, page, svc, fd_client, wc_service)

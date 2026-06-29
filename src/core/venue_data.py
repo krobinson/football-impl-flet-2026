@@ -32,6 +32,12 @@ VENUE_CITY: dict[str, str] = {v["name"]: v["city"] for v in VENUES}
 # Lower-cased name → city for fuzzy / API-name lookups
 _VENUE_CITY_LOWER: dict[str, str] = {k.lower(): v for k, v in VENUE_CITY.items()}
 
+# Reverse: city → stadium name
+CITY_STADIUM: dict[str, str] = {v["city"]: v["name"] for v in VENUES}
+
+# Lower-cased city → stadium for fuzzy lookups
+_CITY_STADIUM_LOWER: dict[str, str] = {k.lower(): v for k, v in CITY_STADIUM.items()}
+
 
 def venue_to_city(api_venue_name: str) -> str:
     """Return the host city for a stadium name.
@@ -54,3 +60,27 @@ def venue_to_city(api_venue_name: str) -> str:
         if key in lower or lower in key:
             return city
     return api_venue_name  # fall back to raw stadium name
+
+
+def city_to_stadium(city_name: str) -> str:
+    """Return the full stadium name for a host city string.
+
+    First tries an exact match, then a case-insensitive substring scan so that
+    minor differences between local fixture city strings and our canonical city
+    names still resolve correctly (e.g. "Guadalajara (Zapopan)" → "Estadio Akron").
+    Returns the original city name if no match is found.
+    """
+    if not city_name:
+        return city_name
+    # Exact match
+    if city_name in CITY_STADIUM:
+        return CITY_STADIUM[city_name]
+    # Case-insensitive exact
+    lower = city_name.lower()
+    if lower in _CITY_STADIUM_LOWER:
+        return _CITY_STADIUM_LOWER[lower]
+    # Substring: local city string may contain our canonical city name or vice-versa
+    for key, stadium in _CITY_STADIUM_LOWER.items():
+        if key in lower or lower in key:
+            return stadium
+    return city_name  # fall back to raw city name
