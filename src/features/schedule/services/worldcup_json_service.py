@@ -61,7 +61,7 @@ def is_group_stage(match: dict) -> bool:
 def transform_match(raw: dict) -> dict:
     """Convert a URL-format match dict to the normalized shape expected by match_row().
 
-    Input: Raw dict from worldcup.json with fields: round, date, time, team1, team2, group, ground.
+    Input: Raw dict from worldcup.json with fields: round, date, time, team1, team2, group, ground, score.
     Output: Normalized dict with fields: utcDate, status, matchday, group, venue, homeTeam, awayTeam, score.
     """
     date_str = raw.get("date", "")
@@ -69,6 +69,7 @@ def transform_match(raw: dict) -> dict:
     round_str = raw.get("round", "")
     group_str = raw.get("group", "")
     ground = raw.get("ground", "")
+    raw_score = raw.get("score")
 
     # Parse date and time, convert to UTC ISO-8601
     utc_date = ""
@@ -92,9 +93,25 @@ def transform_match(raw: dict) -> dict:
         letter = group_str[-1].upper()
         normalized_group = f"GROUP_{letter}"
 
+    # Transform score: URL format is {'ft': [home, away], 'ht': [...]}
+    # API format is {'fullTime': {'home': X, 'away': Y}}
+    transformed_score = None
+    if raw_score and isinstance(raw_score, dict):
+        ft_score = raw_score.get("ft")
+        if ft_score and isinstance(ft_score, list) and len(ft_score) == 2:
+            transformed_score = {
+                "fullTime": {
+                    "home": ft_score[0],
+                    "away": ft_score[1],
+                }
+            }
+
+    # Determine status based on whether score exists
+    status = "FINISHED" if transformed_score else "SCHEDULED"
+
     return {
         "utcDate": utc_date,
-        "status": "SCHEDULED",
+        "status": status,
         "matchday": _extract_matchday(round_str),
         "group": normalized_group,
         "venue": ground if ground else "TBD",
@@ -106,7 +123,7 @@ def transform_match(raw: dict) -> dict:
             "name": raw.get("team2", "TBD"),
             "tla": None,
         },
-        "score": None,
+        "score": transformed_score,
     }
 
 
