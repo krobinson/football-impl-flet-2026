@@ -186,8 +186,6 @@ def match_row(match: dict, row_idx: int) -> ft.Container:
     away_name = away_team.get("name", "TBD")
     home_flag = tla_to_flag(home_team.get("tla"))
     away_flag = tla_to_flag(away_team.get("tla"))
-    home = f"{home_flag} {home_name}" if home_flag else home_name
-    away = f"{away_flag} {away_name}" if away_flag else away_name
     score = _score_text(match)
     status_raw = match.get("status", "")
     status_label, status_colour = _STATUS_LABEL.get(
@@ -197,8 +195,8 @@ def match_row(match: dict, row_idx: int) -> ft.Container:
     matchday = str(match.get("matchday") or "—")
     grp_col = _group_colour(group_letter) if group_letter else ft.Colors.GREY_400
 
-    # Combine teams and score into single "Match" column
-    match_text = f"{home}  {score}  {away}"
+    home_text = f"{home_flag} {home_name}" if home_flag else home_name
+    away_text = f"{away_flag} {away_name}" if away_flag else away_name
 
     row_bg = ft.Colors.with_opacity(0.04 if row_idx % 2 == 0 else 0.0, ft.Colors.WHITE)
 
@@ -228,14 +226,33 @@ def match_row(match: dict, row_idx: int) -> ft.Container:
                     ),
                     width=55,
                 ),
-                # Match (teams + score combined)
+                # Home team
                 ft.Container(
                     ft.Text(
-                        match_text,
+                        home_text,
                         size=12,
                         color=TEXT_PRIMARY,
                     ),
-                    expand=True,
+                    width=150,
+                ),
+                # Away team
+                ft.Container(
+                    ft.Text(
+                        away_text,
+                        size=12,
+                        color=TEXT_PRIMARY,
+                    ),
+                    width=150,
+                ),
+                # Score
+                ft.Container(
+                    ft.Text(
+                        score,
+                        size=12,
+                        color=TEXT_PRIMARY,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    width=60,
                 ),
                 # Status
                 ft.Container(
@@ -273,7 +290,9 @@ def header_row() -> ft.Container:
                 _h("Date", width=90),
                 _h("Time", width=75),
                 _h("Group", width=55),
-                _h("Match", expand=True),
+                _h("Home", width=150),
+                _h("Away", width=150),
+                _h("Score", width=60),
                 _h("Status", width=65),
                 _h("Venue", width=140),
             ],

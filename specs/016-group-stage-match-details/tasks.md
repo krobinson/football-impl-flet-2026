@@ -1,9 +1,9 @@
-# Tasks: Group Stage Match Details via URL Data Source
+# Tasks: Group Stage Match Details — Split Match Column
 
 **Input**: Design documents from `/specs/016-group-stage-match-details/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: Not explicitly requested in feature specification. Test tasks omitted per task generation rules.
+**Tests**: Tests are included as specified in the feature specification.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -13,105 +13,69 @@
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - Include exact file paths in descriptions
 
+## Path Conventions
+
+- **Single project**: `src/`, `tests/` at repository root
+
+---
+
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Project initialization and configuration
+**Purpose**: No additional setup required — the project structure already exists with the WorldCupJsonService, match_row component, and schedule_view in place.
 
-- [x] T001 Add WORLDCUP_JSON_URL constant to src/core/config.py
-- [x] T002 Create src/features/schedule/services/ directory with __init__.py
+No tasks needed for this phase.
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core data service infrastructure that MUST be complete before ANY user story can be implemented
+**Purpose**: Understand the current match row structure and identify all places where the combined "Match" column is rendered.
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+**⚠️ CRITICAL**: This phase must be complete before modifying the UI.
 
-- [x] T003 Create WorldCupDataError exception class in src/features/schedule/services/worldcup_json_service.py
-- [x] T004 Implement transform_match() function in src/features/schedule/services/worldcup_json_service.py
-- [x] T005 Implement is_group_stage() filter function in src/features/schedule/services/worldcup_json_service.py
-- [x] T006 Implement WorldCupJsonService class with get_group_matches() method in src/features/schedule/services/worldcup_json_service.py
-- [x] T007 Implement get_data_source() method in WorldCupJsonService class in src/features/schedule/services/worldcup_json_service.py
+- [x] T001 Review current match_row layout in src/features/schedule/components/match_row.py to understand the combined "Match" column structure (line 200-239)
+- [x] T002 Review current header_row layout in src/features/schedule/components/match_row.py to understand the "Match" header (line 260-285)
+- [x] T003 Identify column width constraints and responsive behavior for the schedule table
 
-**Checkpoint**: Foundation ready - WorldCupJsonService can fetch, transform, and filter data from URL with local fallback
+**Checkpoint**: Foundation ready — understanding of current structure is complete.
 
 ---
 
-## Phase 3: User Story 1 - View all group stage matches from URL data (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 — Split Match Column into Home Team, Away Team, and Score (Priority: P1) 🎯 MVP
 
-**Goal**: Load and display all 48 group stage matches from the openfootball worldcup.json URL without requiring an API key
+**Goal**: Replace the single combined "Match" column (showing "Home Team vs Away Team") with three separate columns: Home Team, Away Team, and Score. This improves readability and makes it easier to scan team names and scores independently.
 
-**Independent Test**: Launch the app with no API key configured. Open the Schedule tab. Verify all 48 group stage matches load from the URL and display team names, dates, times, groups, and venues.
+**Independent Test**: Open the Schedule tab. Verify each match row displays three separate columns: Home Team (showing home team name with flag if available), Away Team (showing away team name with flag if available), and Score (showing "vs" for scheduled matches or "X–Y" for finished matches). The header row should show "Home", "Away", and "Score" labels.
+
+### Tests for User Story 1 ⚠️
+
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
+
+- [x] T004 [P] [US1] Unit test for match_row rendering with separate home team, away team, and score columns in tests/unit/test_match_row_columns.py
+- [x] T005 [P] [US1] Unit test for header_row rendering with "Home", "Away", "Score" headers in tests/unit/test_match_row_columns.py
 
 ### Implementation for User Story 1
 
-- [x] T008 [US1] Modify build_schedule_view() signature to accept WorldCupJsonService parameter in src/features/schedule/views/schedule_view.py
-- [x] T009 [US1] Implement data loading logic using WorldCupJsonService.get_group_matches() in src/features/schedule/views/schedule_view.py
-- [x] T010 [US1] Add data source notice display ("Loaded from openfootball data") in src/features/schedule/views/schedule_view.py
-- [x] T011 [US1] Modify match_row() to handle URL data format (no TLA codes, no score field) in src/features/schedule/components/match_row.py
-- [x] T012 [US1] Update app.py to instantiate WorldCupJsonService and pass to build_schedule_view() in src/app.py
+- [x] T006 [US1] Modify match_row() function in src/features/schedule/components/match_row.py to replace the combined "Match" column (line 200-239) with three separate columns:
+  - Home Team column (width ~150px, showing flag + home team name)
+  - Away Team column (width ~150px, showing flag + away team name)
+  - Score column (width ~60px, showing "vs" or "X–Y" score)
+- [x] T007 [US1] Modify header_row() function in src/features/schedule/components/match_row.py to replace the "Match" header (line 276) with three separate headers: "Home" (width ~150px), "Away" (width ~150px), "Score" (width ~60px)
+- [x] T008 [US1] Adjust column widths to ensure the table remains usable on viewports from 360px to 1920px without horizontal scrolling (per SC-006)
+- [x] T009 [US1] Verify score display handles both scheduled matches ("vs") and finished matches ("X–Y") correctly in the new Score column
 
-**Checkpoint**: At this point, User Story 1 should be fully functional - all 48 matches display from URL data without API key
-
----
-
-## Phase 4: User Story 2 - Filter matches by group (Priority: P1)
-
-**Goal**: Allow users to filter matches by selecting a group chip (A-L) or view all matches
-
-**Independent Test**: Open the Schedule tab. Click "Group C". Verify exactly 6 Group C matches appear. Click "All" to verify all 48 matches return.
-
-### Implementation for User Story 2
-
-- [x] T013 [US2] Verify existing group chip filtering works with transformed "GROUP_A" format in src/features/schedule/views/schedule_view.py
-- [x] T014 [US2] Test group filtering with URL data to ensure 6 matches per group display correctly in src/features/schedule/views/schedule_view.py
-
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - matches load from URL and filter by group
+**Checkpoint**: At this point, the match row displays three separate columns for Home Team, Away Team, and Score. The table is readable and functional.
 
 ---
 
-## Phase 5: User Story 3 - See match details with venue information (Priority: P2)
+## Phase 4: Polish & Cross-Cutting Concerns
 
-**Goal**: Display venue/city information for each match from the ground field in URL data
+**Purpose**: Final validation and cleanup
 
-**Independent Test**: Select any group. Verify each match shows a venue name (city or stadium). Verify venue data matches the ground field from the worldcup.json source.
-
-### Implementation for User Story 3
-
-- [x] T015 [US3] Ensure venue field displays ground value correctly in match_row() in src/features/schedule/components/match_row.py
-- [x] T016 [US3] Handle missing ground field by displaying "TBD" in match_row() in src/features/schedule/components/match_row.py
-- [x] T017 [US3] Verify parenthetical venue details display correctly (e.g., "Guadalajara (Zapopan)") in src/features/schedule/components/match_row.py
-
-**Checkpoint**: At this point, User Story 3 works - venue information displays for all matches
-
----
-
-## Phase 6: User Story 4 - Distinguish match scheduling status (Priority: P2)
-
-**Goal**: Display "Scheduled" status and "vs" for all URL data matches (pre-tournament fixtures)
-
-**Independent Test**: View any group. Verify all matches show a "Scheduled" status indicator. Verify no scores are shown for unplayed matches (display "vs" instead).
-
-### Implementation for User Story 4
-
-- [x] T018 [US4] Verify status badge displays "Scheduled" for URL data matches in src/features/schedule/components/match_row.py
-- [x] T019 [US4] Verify score area displays "vs" when score field is None in src/features/schedule/components/match_row.py
-- [x] T020 [US4] Ensure date and time information displays clearly for all matches in src/features/schedule/components/match_row.py
-
-**Checkpoint**: All user stories should now be independently functional
-
----
-
-## Phase 7: Polish & Cross-Cutting Concerns
-
-**Purpose**: Error handling, validation, and final integration
-
-- [x] T021 Add error handling for WorldCupDataError in schedule_view.py with user-friendly message in src/features/schedule/views/schedule_view.py
-- [x] T022 Implement retry logic or fallback notice when URL fetch fails in src/features/schedule/views/schedule_view.py
-- [x] T023 Verify all 48 matches display correctly with no API key configured in src/app.py
-- [x] T024 Run quickstart.md validation scenarios and verify all pass
-- [x] T025 Code cleanup and remove any debug logging or temporary code
+- [x] T010 Run unit tests to verify match_row and header_row render correctly with the new column structure
+- [x] T011 Run quickstart.md manual acceptance tests to verify the UI displays correctly in the app
+- [x] T012 Verify responsive behavior on narrow viewports (360px width) — ensure columns don't overflow or truncate excessively
+- [x] T013 Code cleanup: remove the old `match_text` variable and any unused formatting logic from match_row.py
 
 ---
 
@@ -119,45 +83,37 @@
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies - can start immediately
-- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3-6)**: All depend on Foundational phase completion
-  - User stories can then proceed in parallel (if staffed)
-  - Or sequentially in priority order (P1 → P2)
-- **Polish (Phase 7)**: Depends on all desired user stories being complete
+- **Foundational (Phase 2)**: No dependencies — can start immediately
+- **User Story 1 (Phase 3)**: Depends on Foundational phase completion
+- **Polish (Phase 4)**: Depends on User Story 1 being complete
 
 ### User Story Dependencies
 
-- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
-- **User Story 2 (P1)**: Can start after Foundational (Phase 2) - Builds on US1 data loading
-- **User Story 3 (P2)**: Can start after Foundational (Phase 2) - Independent of US1/US2
-- **User Story 4 (P2)**: Can start after Foundational (Phase 2) - Independent of US1/US2/US3
+- **User Story 1 (P1)**: Can start after Foundational (Phase 2) — No dependencies on other stories
 
 ### Within Each User Story
 
-- Models before services (not applicable - no new models)
-- Services before views
-- Core implementation before integration
-- Story complete before moving to next priority
+- Tests MUST be written and FAIL before implementation
+- Implementation before validation
+- Story complete before moving to polish
 
 ### Parallel Opportunities
 
-- All Setup tasks marked [P] can run in parallel (none marked)
-- All Foundational tasks marked [P] can run in parallel (none marked - sequential dependency)
-- Once Foundational phase completes, all user stories can start in parallel (if team capacity allows)
-- Different user stories can be worked on in parallel by different team members
+- T004 and T005 (tests) can run in parallel
+- T006 and T007 (implementation) can run in parallel after tests are written
 
 ---
 
 ## Parallel Example: User Story 1
 
 ```bash
-# Launch all implementation tasks for User Story 1:
-Task: "Modify build_schedule_view() signature to accept WorldCupJsonService parameter"
-Task: "Implement data loading logic using WorldCupJsonService.get_group_matches()"
-Task: "Add data source notice display"
-Task: "Modify match_row() to handle URL data format"
-Task: "Update app.py to instantiate WorldCupJsonService"
+# Launch all tests for User Story 1 together:
+Task: "Unit test for match_row rendering with separate columns in tests/unit/test_match_row_columns.py"
+Task: "Unit test for header_row rendering with separate headers in tests/unit/test_match_row_columns.py"
+
+# Launch implementation tasks together:
+Task: "Modify match_row() function in src/features/schedule/components/match_row.py"
+Task: "Modify header_row() function in src/features/schedule/components/match_row.py"
 ```
 
 ---
@@ -166,31 +122,16 @@ Task: "Update app.py to instantiate WorldCupJsonService"
 
 ### MVP First (User Story 1 Only)
 
-1. Complete Phase 1: Setup (T001-T002)
-2. Complete Phase 2: Foundational (T003-T007) - CRITICAL
-3. Complete Phase 3: User Story 1 (T008-T012)
-4. **STOP and VALIDATE**: Test User Story 1 independently (48 matches load without API key)
-5. Deploy/demo if ready
+1. Complete Phase 2: Foundational (review current structure)
+2. Complete Phase 3: User Story 1 (split columns)
+3. **STOP and VALIDATE**: Test the new column layout independently
+4. Deploy/demo if ready
 
 ### Incremental Delivery
 
-1. Complete Setup + Foundational → Foundation ready (service can fetch/transform data)
-2. Add User Story 1 → Test independently → Deploy/Demo (MVP! - matches display)
-3. Add User Story 2 → Test independently → Deploy/Demo (group filtering works)
-4. Add User Story 3 → Test independently → Deploy/Demo (venue info displays)
-5. Add User Story 4 → Test independently → Deploy/Demo (status indicators work)
-6. Each story adds value without breaking previous stories
-
-### Parallel Team Strategy
-
-With multiple developers:
-
-1. Team completes Setup + Foundational together
-2. Once Foundational is done:
-   - Developer A: User Story 1 (data loading + display)
-   - Developer B: User Story 2 (group filtering)
-   - Developer C: User Stories 3 + 4 (venue + status - smaller scope)
-3. Stories complete and integrate independently
+1. Complete Foundational → Understanding ready
+2. Add User Story 1 → Test independently → Deploy/Demo (MVP!)
+3. Polish → Final validation
 
 ---
 
@@ -198,24 +139,8 @@ With multiple developers:
 
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
-- Each user story should be independently completable and testable
+- The change is localized to match_row.py — no service layer or data model changes required
+- Column widths are approximate and may need adjustment based on visual testing
+- Flag emojis (from tla_to_flag) should continue to display in the Home and Away columns when TLA codes are available
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
-- Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
-
-## Task Summary
-
-- **Total tasks**: 25
-- **Setup**: 2 tasks
-- **Foundational**: 5 tasks
-- **User Story 1**: 5 tasks
-- **User Story 2**: 2 tasks
-- **User Story 3**: 3 tasks
-- **User Story 4**: 3 tasks
-- **Polish**: 5 tasks
-
-## Suggested MVP Scope
-
-**MVP = User Story 1 only** (Phases 1-3, tasks T001-T012)
-
-This delivers: All 48 group stage matches load from URL and display without API key requirement.
