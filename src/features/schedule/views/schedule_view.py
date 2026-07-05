@@ -1,6 +1,6 @@
-"""Schedule view — 2026 FIFA World Cup pool match schedule.
+"""Schedule view — 2026 FIFA World Cup tournament schedule.
 
-Shows all 48 group-stage kick-off times (UTC), groups, and host cities
+Shows all 104 matches (72 group stage + 32 knockout) with scores,
 sourced from openfootball worldcup.json URL (no API key required) or
 football-data.org API (with API key).
 """
@@ -15,6 +15,7 @@ from core.ui_helpers import (
     ACCENT, BG_CARD, TEXT_PRIMARY, TEXT_SECONDARY, BORDER_COLOR,
 )
 from features.schedule.components import match_row, header_row
+from features.schedule.components.stage_chips import build_stage_chips
 from features.schedule.services.worldcup_json_service import WorldCupJsonService, WorldCupDataError
 from core.components import page_header, loading_row
 
@@ -74,17 +75,45 @@ def build_schedule_view(
 
     lr = loading_row([])
     rows_col = ft.Column([], spacing=2, scroll=ft.ScrollMode.AUTO, expand=True)
-    _state: dict = {"all_matches": [], "active_group": "All", "data_source": ""}
+    _state: dict = {
+        "all_matches": [],
+        "active_stage": "ALL",
+        "active_group": "All",
+        "data_source": "",
+    }
 
-    # chips_row is rebuilt on each selection to reflect active state
-    chips_row = ft.Row(wrap=True, spacing=6, run_spacing=6)
+    # Stage chips row
+    stage_chips_row = ft.Row(wrap=True, spacing=6, run_spacing=6)
 
-    def _rebuild_chips() -> None:
-        chips_row.controls = _build_group_chips(
+    # Group chips row (visible only when stage is GROUP_STAGE)
+    group_chips_row = ft.Row(wrap=True, spacing=6, run_spacing=6)
+    group_chips_container = ft.Container(
+        content=group_chips_row,
+        visible=False,
+    )
+
+    def _rebuild_stage_chips() -> None:
+        stage_chips_row.controls = build_stage_chips(
+            _state["active_stage"], _on_stage_select
+        ).controls
+        try:
+            stage_chips_row.update()
+        except Exception:
+            pass
+
+    def _rebuild_group_chips() -> None:
+        group_chips_row.controls = _build_group_chips(
             _state["active_group"], _on_chip_select
         ).controls
         try:
-            chips_row.update()
+            group_chips_row.update()
+        except Exception:
+            pass
+
+    def _update_group_chips_visibility() -> None:
+        group_chips_container.visible = _state["active_stage"] == "GROUP_STAGE"
+        try:
+            group_chips_container.update()
         except Exception:
             pass
 
@@ -101,20 +130,38 @@ def build_schedule_view(
         except Exception:
             pass
 
-    def _apply_group_filter() -> None:
-        sel = _state["active_group"]
+    def _apply_filters() -> None:
         matches = _state["all_matches"]
-        if sel != "All":
-            matches = [m for m in matches if m.get("group") == f"GROUP_{sel}"]
+        stage = _state["active_stage"]
+        group = _state["active_group"]
+
+        # Apply stage filter
+        if stage != "ALL":
+            matches = [m for m in matches if m.get("stage") == stage]
+
+        # Apply group filter (only when stage is GROUP_STAGE)
+        if stage == "GROUP_STAGE" and group != "All":
+            matches = [m for m in matches if m.get("group") == f"GROUP_{group}"]
+
         _render_matches(matches)
+
+    def _on_stage_select(stage: str) -> None:
+        _state["active_stage"] = stage
+        # Reset group filter when changing stage
+        _state["active_group"] = "All"
+        _rebuild_stage_chips()
+        _rebuild_group_chips()
+        _update_group_chips_visibility()
+        _apply_filters()
 
     def _on_chip_select(label: str) -> None:
         _state["active_group"] = label
-        _rebuild_chips()
-        _apply_group_filter()
+        _rebuild_group_chips()
+        _apply_filters()
 
-    # Seed the chip row with initial state (All active)
-    chips_row.controls = _build_group_chips("All", _on_chip_select).controls
+    # Seed the chip rows with initial state
+    stage_chips_row.controls = build_stage_chips("ALL", _on_stage_select).controls
+    group_chips_row.controls = _build_group_chips("All", _on_chip_select).controls
 
     def _load() -> None:
         # Priority: wc_service (URL-based, no API key) > fd_client (API-based)
@@ -129,13 +176,13 @@ def build_schedule_view(
                 pass
 
             try:
-                matches = wc_service.get_group_matches()
+                matches = wc_service.get_all_matches()
                 _state["all_matches"] = matches
                 _state["data_source"] = wc_service.get_data_source()
-                _apply_group_filter()
+                _apply_filters()
                 
                 source_label = "openfootball data (URL)" if _state["data_source"] == "url" else "local file"
-                lr.notice.value = f"✅  {len(matches)} group-stage matches loaded from {source_label}"
+                lr.notice.value = f"✅  {len(matches)} matches loaded from {source_label}"
                 lr.notice.visible = True
             except WorldCupDataError as exc:
                 lr.notice.value = f"⚠️  Failed to load data: {exc}"
@@ -164,7 +211,7 @@ def build_schedule_view(
                 matches = fd_client.get_group_matches(season=2026)
                 _state["all_matches"] = matches
                 _state["data_source"] = "api"
-                _apply_group_filter()
+                _apply_filters()
                 lr.notice.value = f"✅  {len(matches)} group-stage matches loaded from football-data.org (UTC times)"
                 lr.notice.visible = True
             except ApiKeyMissingError as exc:
@@ -194,12 +241,13 @@ def build_schedule_view(
 
     return ft.Column(
         [
-            ft.Text("📅  2026 World Cup Pool Schedule", size=22,
+            ft.Text("📅  2026 World Cup Schedule", size=22,
                     weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
-            ft.Text("Group-stage kick-off times are shown in UTC",
+            ft.Text("All matches with kick-off times in UTC",
                     size=13, color=TEXT_SECONDARY),
             ft.Divider(color=BORDER_COLOR, height=1),
-            chips_row,
+            stage_chips_row,
+            group_chips_container,
             lr.row,
             lr.notice,
             ft.Container(

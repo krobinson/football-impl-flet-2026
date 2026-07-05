@@ -198,6 +198,15 @@ def match_row(match: dict, row_idx: int) -> ft.Container:
     home_text = f"{home_flag} {home_name}" if home_flag else home_name
     away_text = f"{away_flag} {away_name}" if away_flag else away_name
 
+    # Group column: show group letter for group stage, round_display for knockout
+    round_display = match.get("round_display", "")
+    if group_letter:
+        group_label = f"Grp {group_letter}"
+    elif round_display:
+        group_label = round_display
+    else:
+        group_label = "—"
+
     row_bg = ft.Colors.with_opacity(0.04 if row_idx % 2 == 0 else 0.0, ft.Colors.WHITE)
 
     return ft.Container(
@@ -221,7 +230,7 @@ def match_row(match: dict, row_idx: int) -> ft.Container:
                 # Group badge
                 ft.Container(
                     ft.Text(
-                        f"Grp {group_letter}", size=11, weight=ft.FontWeight.BOLD,
+                        group_label, size=11, weight=ft.FontWeight.BOLD,
                         color=grp_col,
                     ),
                     width=55,

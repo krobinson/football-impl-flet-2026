@@ -169,3 +169,116 @@ class TestHeaderRowSplitColumns:
         if isinstance(inner_row, ft.Row):
             containers = [c for c in inner_row.controls if isinstance(c, ft.Container)]
             assert len(containers) >= 9, f"Expected at least 9 header columns, got {len(containers)}"
+
+
+# ---------------------------------------------------------------------------
+# T009-T011 — US1: Group stage match scores display
+# ---------------------------------------------------------------------------
+
+class TestGroupStageScores:
+    """Verify group stage matches display actual scores and correct status badges."""
+
+    def test_group_stage_match_with_score_displays_xy(self):
+        """T009: Group stage match with score shows X-Y in Score column."""
+        from features.schedule.components.match_row import match_row
+        match = _make_match(score_home=2, score_away=0, status="FINISHED")
+        row = match_row(match, 0)
+        containers = _get_row_containers(row)
+        score_texts = _extract_texts(containers[6])
+        assert any("2–0" in t for t in score_texts), f"Expected '2–0' in score column: {score_texts}"
+
+    def test_group_stage_match_with_score_shows_ft_status(self):
+        """T010: Group stage match with score shows FT status badge."""
+        from features.schedule.components.match_row import match_row
+        match = _make_match(score_home=1, score_away=1, status="FINISHED")
+        row = match_row(match, 0)
+        containers = _get_row_containers(row)
+        status_texts = _extract_texts(containers[7])
+        assert any("FT" in t for t in status_texts), f"Expected 'FT' in status column: {status_texts}"
+
+    def test_group_stage_match_without_score_shows_vs_and_scheduled(self):
+        """T011: Group stage match without score shows 'vs' and 'Scheduled'."""
+        from features.schedule.components.match_row import match_row
+        match = _make_match(status="SCHEDULED")
+        row = match_row(match, 0)
+        containers = _get_row_containers(row)
+        score_texts = _extract_texts(containers[6])
+        status_texts = _extract_texts(containers[7])
+        assert any("vs" in t for t in score_texts), f"Expected 'vs' in score column: {score_texts}"
+        assert any("Scheduled" in t for t in status_texts), f"Expected 'Scheduled' in status column: {status_texts}"
+
+
+# ---------------------------------------------------------------------------
+# T014-T017 — US2: Knockout stage matches display
+# ---------------------------------------------------------------------------
+
+def _make_knockout_match(
+    home: str = "South Africa",
+    away: str = "Canada",
+    score_home: int | None = None,
+    score_away: int | None = None,
+    status: str = "SCHEDULED",
+    venue: str = "Los Angeles (Inglewood)",
+    round_display: str = "R32",
+    utc_date: str = "2026-06-28T19:00:00Z",
+) -> dict:
+    """Create a knockout match dict (no group field)."""
+    return {
+        "id": 73,
+        "utcDate": utc_date,
+        "status": status,
+        "matchday": 99,
+        "group": "",
+        "venue": venue,
+        "homeTeam": {"name": home, "tla": None},
+        "awayTeam": {"name": away, "tla": None},
+        "score": {"fullTime": {"home": score_home, "away": score_away}} if score_home is not None else None,
+        "stage": "ROUND_OF_32",
+        "round_display": round_display,
+    }
+
+
+class TestKnockoutMatches:
+    """Verify knockout matches display round labels and scores correctly."""
+
+    def test_knockout_match_displays_round_label_in_group_column(self):
+        """T014: Knockout match shows round label (e.g., 'R32') in Group column."""
+        from features.schedule.components.match_row import match_row
+        match = _make_knockout_match(round_display="R32")
+        row = match_row(match, 0)
+        containers = _get_row_containers(row)
+        group_texts = _extract_texts(containers[3])
+        assert any("R32" in t for t in group_texts), f"Expected 'R32' in group column: {group_texts}"
+
+    def test_knockout_match_with_score_displays_score_and_ft(self):
+        """T015: Knockout match with score shows score and FT status."""
+        from features.schedule.components.match_row import match_row
+        match = _make_knockout_match(score_home=0, score_away=1, status="FINISHED")
+        row = match_row(match, 0)
+        containers = _get_row_containers(row)
+        score_texts = _extract_texts(containers[6])
+        status_texts = _extract_texts(containers[7])
+        assert any("0–1" in t for t in score_texts), f"Expected '0–1' in score column: {score_texts}"
+        assert any("FT" in t for t in status_texts), f"Expected 'FT' in status column: {status_texts}"
+
+    def test_knockout_match_without_score_shows_vs_and_scheduled(self):
+        """T016: Knockout match without score shows 'vs' and 'Scheduled'."""
+        from features.schedule.components.match_row import match_row
+        match = _make_knockout_match(status="SCHEDULED")
+        row = match_row(match, 0)
+        containers = _get_row_containers(row)
+        score_texts = _extract_texts(containers[6])
+        status_texts = _extract_texts(containers[7])
+        assert any("vs" in t for t in score_texts), f"Expected 'vs' in score column: {score_texts}"
+        assert any("Scheduled" in t for t in status_texts), f"Expected 'Scheduled' in status column: {status_texts}"
+
+    def test_knockout_match_with_placeholder_team_names(self):
+        """T017: Knockout match with placeholder team names displays placeholder text."""
+        from features.schedule.components.match_row import match_row
+        match = _make_knockout_match(home="1A", away="2B")
+        row = match_row(match, 0)
+        containers = _get_row_containers(row)
+        home_texts = _extract_texts(containers[4])
+        away_texts = _extract_texts(containers[5])
+        assert any("1A" in t for t in home_texts), f"Expected '1A' in home column: {home_texts}"
+        assert any("2B" in t for t in away_texts), f"Expected '2B' in away column: {away_texts}"

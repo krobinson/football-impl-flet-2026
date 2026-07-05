@@ -58,6 +58,47 @@ def is_group_stage(match: dict) -> bool:
     return group.startswith("Group ") and len(group) == 7 and group[-1].isalpha()
 
 
+def classify_stage(match: dict) -> str:
+    """Classify a match into a tournament stage category.
+
+    Returns one of: GROUP_STAGE, ROUND_OF_32, ROUND_OF_16, QUARTER_FINAL,
+    SEMI_FINAL, FINAL, or UNKNOWN.
+    """
+    group = match.get("group", "")
+    if group.startswith("Group "):
+        return "GROUP_STAGE"
+    round_name = match.get("round", "")
+    stage_map = {
+        "Round of 32": "ROUND_OF_32",
+        "Round of 16": "ROUND_OF_16",
+        "Quarter-final": "QUARTER_FINAL",
+        "Semi-final": "SEMI_FINAL",
+        "Final": "FINAL",
+        "Match for third place": "FINAL",
+    }
+    return stage_map.get(round_name, "UNKNOWN")
+
+
+def round_display_label(match: dict) -> str:
+    """Return a short display label for knockout rounds.
+
+    Returns empty string for group stage matches.
+    """
+    group = match.get("group", "")
+    if group.startswith("Group "):
+        return ""
+    round_name = match.get("round", "")
+    label_map = {
+        "Round of 32": "R32",
+        "Round of 16": "R16",
+        "Quarter-final": "QF",
+        "Semi-final": "SF",
+        "Final": "F",
+        "Match for third place": "3rd",
+    }
+    return label_map.get(round_name, "")
+
+
 def transform_match(raw: dict) -> dict:
     """Convert a URL-format match dict to the normalized shape expected by match_row().
 
@@ -124,6 +165,8 @@ def transform_match(raw: dict) -> dict:
             "tla": None,
         },
         "score": transformed_score,
+        "stage": classify_stage(raw),
+        "round_display": round_display_label(raw),
     }
 
 
@@ -180,6 +223,47 @@ class WorldCupJsonService:
 
         # Transform to normalized format
         transformed = [transform_match(m) for m in group_matches]
+
+        # Sort by date then time
+        transformed.sort(key=lambda m: (m.get("utcDate", ""), m.get("matchday", 99)))
+
+        return transformed
+
+    def get_all_matches(self) -> list[dict]:
+        """Fetch all tournament matches (group + knockout), transform them, and return sorted.
+
+        Returns:
+            list[dict]: 104 match dicts (72 group stage + 32 knockout).
+
+        Raises:
+            WorldCupDataError: If both URL fetch and local file fallback fail.
+        """
+        raw_matches = None
+
+        # Try URL first
+        try:
+            raw_matches = self._fetch_from_url()
+            self._data_source = "url"
+            logger.info(f"Loaded {len(raw_matches)} matches from URL")
+        except Exception as e:
+            logger.warning(f"URL fetch failed: {e}. Falling back to local file.")
+            url_error = e
+
+            # Fall back to local file
+            try:
+                raw_matches = self._load_from_file()
+                self._data_source = "local"
+                logger.info(f"Loaded {len(raw_matches)} matches from local file")
+            except Exception as file_e:
+                logger.error(f"Local file load also failed: {file_e}")
+                raise WorldCupDataError(
+                    "Failed to load World Cup data from both URL and local file",
+                    url_error=url_error,
+                    file_error=file_e,
+                ) from file_e
+
+        # Transform all matches (no group filter)
+        transformed = [transform_match(m) for m in raw_matches]
 
         # Sort by date then time
         transformed.sort(key=lambda m: (m.get("utcDate", ""), m.get("matchday", 99)))
